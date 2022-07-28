@@ -1,0 +1,46 @@
+dn: ou=people,dc=ibm,dc=com
+objectClass: organizationalUnit
+description: All people in organization
+ou: people
+
+dn: ou=groups,dc=ibm,dc=com
+objectClass: organizationalUnit
+objectClass: top
+ou: groups
+
+
+###MQ USERS
+
+#MQ write user - 'mqwrite'
+
+dn: uid=mqwrite,ou=people,dc=ibm,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: mqwriteCN
+sn: mqwriteSN
+uid: mqwrite
+userPassword: mqwrite
+
+#MQ read user - 'mqread'
+
+dn: uid=mqread,ou=people,dc=ibm,dc=com
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+objectClass: top
+cn: mqreadCN
+sn: mqreadSN
+uid: mqread
+userPassword: mqread
+
+
+###MQ GROUP - 'mqusers'
+
+dn: cn=mqusers,ou=groups,dc=ibm,dc=com
+objectClass: groupOfUniqueNames
+objectClass: top
+cn: mqusers
+uniquemember: uid=mqwrite,ou=people,dc=ibm,dc=com
+uniquemember: uid=mqread,ou=people,dc=ibm,dc=com

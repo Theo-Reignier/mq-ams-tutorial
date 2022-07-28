@@ -1,0 +1,71 @@
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: qmgr-setup
+  namespace: ams-mq
+data:
+  init.mqsc: |
+    *
+    * prepare auth for the queue manager
+    *
+
+    * Defines the LDAP connection for user authentication
+    DEFINE AUTHINFO(USE.LDAP) +
+    AUTHTYPE(IDPWLDAP) +
+    CONNAME('ldap-service.ldap-ams(389)') +
+    LDAPUSER('cn=admin,dc=ibm,dc=com') LDAPPWD('admin') +
+    SECCOMM(NO) +
+    USRFIELD('uid') +
+    SHORTUSR('uid') +
+    BASEDNU('ou=people,dc=ibm,dc=com') +
+    AUTHORMD(SEARCHGRP) +
+    BASEDNG('ou=groups,dc=ibm,dc=com') +
+    GRPFIELD('cn') +
+    CLASSGRP('groupOfUniqueNames') +
+    FINDGRP('uniqueMember') +
+    REPLACE
+
+    * Make MQ use LDAP for authentication
+    ALTER QMGR CONNAUTH(USE.LDAP)
+    REFRESH QMGR TYPE(CONFIGEV) OBJECT(AUTHINFO)
+
+
+    *
+    * prepare the channel that applications will connect to
+    *
+
+    * Defines the channel which allows external connections
+    DEFINE CHANNEL(AMS.SVRCONN) CHLTYPE(SVRCONN) TRPTYPE(TCP) SSLCAUTH(OPTIONAL) SSLCIPH('ANY_TLS12_OR_HIGHER') REPLACE
+
+    * Allow Alice and Bob's JMS apps to connect to the app channel
+    SET CHLAUTH(AMS.SVRCONN) TYPE(BLOCKUSER) USERLIST(*MQWRITE) WARN(YES) ACTION(REPLACE)
+    SET CHLAUTH(AMS.SVRCONN) TYPE(BLOCKUSER) USERLIST(*MQREAD) WARN(YES) ACTION(REPLACE)
+    REFRESH SECURITY
+
+
+    *
+    * prepare the queue that applications will use
+    *
+
+    * Defines a queue on the QM
+    DEFINE QLOCAL(AMS.QLOCAL) REPLACE
+
+
+    *
+    * setup security
+    *
+
+    * Allow Alice and Bob to use the queue manager
+    SET AUTHREC OBJTYPE(QMGR) GROUP('mqusers') AUTHADD(CONNECT, INQ)
+
+    * Allow Alice and Bob to use the app channel
+    SET AUTHREC OBJTYPE(CHANNEL) PROFILE(AMS.SVRCONN) GROUP('mqusers')     AUTHADD(ALLMQI)
+
+    * Allow Alice to put messages to the AMS.QLOCAL queue
+    SET AUTHREC OBJTYPE(QUEUE)   PROFILE(AMS.QLOCAL)  PRINCIPAL('mqwrite') AUTHADD(PUT)
+
+    * Allow Bob to get messages from the AMS.QLOCAL queue
+    SET AUTHREC OBJTYPE(QUEUE)   PROFILE(AMS.QLOCAL)  PRINCIPAL('mqread')  AUTHADD(GET, BROWSE, INQ)
+
+    * Defines a policy which means sender and receivers certificates have to match the distinguished names below
+    SET POLICY(AMS.QLOCAL) SIGNALG(SHA1) ENCALG(AES256) SIGNER('CN=alice,O=IBM,C=GB') RECIP('CN=bob,O=IBM,C=GB')

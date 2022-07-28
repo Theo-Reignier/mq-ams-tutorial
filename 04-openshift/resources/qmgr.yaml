@@ -1,0 +1,40 @@
+apiVersion: mq.ibm.com/v1beta1
+kind: QueueManager
+metadata:
+  name: ams-qmgr
+  namespace: ams-mq
+spec:
+  license:
+    accept: true
+    license: L-RJON-CD3JKX
+    use: NonProduction
+  pki:
+    keys:
+      - name: default
+        secret:
+          items:
+            - tls.crt
+            - tls.key
+          secretName: mq-server-tls
+    trust:
+      - name: ca
+        secret:
+          items:
+            - ca.crt
+          secretName: mq-ca-tls
+  web:
+    enabled: true
+  version: 9.3.0.0-r1
+  template:
+    pod:
+      containers:
+        - name: qmgr
+  queueManager:
+    route:
+      enabled: true
+    name: AMSQMGR
+    mqsc:
+      - configMap:
+          items:
+            - init.mqsc
+          name: qmgr-setup

@@ -1,0 +1,15 @@
+kind: Route
+apiVersion: route.openshift.io/v1
+metadata:
+  name: mq-app-route
+  namespace: ams-mq
+spec:
+  host: ams2e-svrconn.chl.mq.ibm.com
+  to:
+    kind: Service
+    name: ams-qmgr-ibm-mq
+    weight: 100
+  port:
+    targetPort: 1414
+  tls:
+    termination: passthrough

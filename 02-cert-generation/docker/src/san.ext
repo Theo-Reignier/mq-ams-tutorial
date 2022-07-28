@@ -1,0 +1,1 @@
+subjectAltName = DNS:$ENV::SAN_DNS
